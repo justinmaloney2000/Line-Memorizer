@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Line Practice</title>
+  <style>
+    body {
+      background: #0f0f0f;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+    .box {
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: auto;
+    }
+    .cue {
+      color: #aaa;
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 70px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 10px;
+      margin-right: 5px;
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+    .hint {
+      color: #4da6ff;
+      display: none;
+      margin-top: 10px;
+    }
+    .correct {
+      color: #4caf50;
+      margin-top: 10px;
+    }
+    .wrong {
+      color: #ff6b6b;
+      margin-top: 10px;
+    }
+    a {
+      color: #4da6ff;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<a href="index.html">⬅ Back</a>
+
+<div class="box">
+  <div class="cue">
+    Cue line: “You never listen to me.”
+  </div>
+
+  <textarea id="userInput" placeholder="Type your line from memory..."></textarea>
+
+  <br>
+  <button onclick="checkLine()">Check</button>
+  <button onclick="showHint()">Hint</button>
+
+  <div id="hint" class="hint"></div>
+  <div id="feedback"></div>
+</div>
+
+<script>
+  const correctLine = "I do listen. I just don’t agree.";
+  const hintText = "I do listen...";
+
+  function normalize(text) {
+    return text.toLowerCase().replace(/[^\w\s]/g, "").trim();
+  }
+
+  function checkLine() {
+    const input = document.getElementById("userInput").value;
+    const feedback = document.getElementById("feedback");
+
+    if (normalize(input) === normalize(correctLine)) {
+      feedback.innerHTML = "<div class='correct'>✔ Correct!</div>";
+    } else {
+      feedback.innerHTML = "<div class='wrong'>Try again.</div>";
+    }
+  }
+
+  function showHint() {
+    const hint = document.getElementById("hint");
+    hint.textContent = hintText;
+    hint.style.display = "block";
+
+    setTimeout(() => {
+      hint.style.display = "none";
+    }, 3000);
+  }
+</script>
+
+</body>
+</html>
