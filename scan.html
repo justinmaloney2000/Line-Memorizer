@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scan Script</title>
+
+  <!-- Load OCR safely -->
+  <script defer src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+
+  <style>
+    body {
+      background: #0f0f0f;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      text-align: center;
+    }
+    input {
+      margin-top: 20px;
+      font-size: 16px;
+      color: white;
+      background: #333;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 16px;
+      font-size: 16px;
+    }
+    pre {
+      background: #1c1c1c;
+      padding: 15px;
+      margin-top: 20px;
+      text-align: left;
+      white-space: pre-wrap;
+      border-radius: 8px;
+    }
+    a {
+      color: #4da6ff;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<a href="index.html">⬅ Back</a>
+
+<h1>📸 Scan Your Script</h1>
+<p>Upload a photo or screenshot of a printed script page.</p>
+
+<input type="file" id="imageInput" accept="image/*">
+<br>
+<button onclick="scanText()">Scan Image</button>
+
+<pre id="output">Nothing scanned yet.</pre>
+
+<script>
+async function scanText() {
+  try {
+    const image = document.getElementById("imageInput").files[0];
+    if (!image) {
+      alert("Please choose an image first.");
+      return;
+    }
+
+    document.getElementById("output").textContent = "Scanning… please wait.";
+
+    const result = await Tesseract.recognize(image, "eng");
+
+    document.getElementById("output").textContent = result.data.text;
+
+  } catch (err) {
+    document.getElementById("output").textContent =
+      "⚠️ Scanner error:\n\n" + err;
+  }
+}
+</script>
+
+</body>
+</html>
