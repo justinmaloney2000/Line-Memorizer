@@ -27,6 +27,7 @@
       font-size: 14px;
       padding: 10px;
       border-radius: 8px;
+      resize: vertical;
     }
     a {
       color: #4da6ff;
@@ -52,14 +53,17 @@
 <br>
 <button onclick="scanText()">Scan Image</button>
 
-<textarea id="output">
-Nothing scanned yet.
+<textarea id="output" spellcheck="true">
+You can edit this text.
+Fix OCR mistakes.
+Format lines like:
+
+CHARACTER: line
 </textarea>
 
 <div class="note">
-Format your script like:<br>
-<code>CHARACTER: line</code><br>
-Delete stage directions for best results.
+Clean the text before practicing.  
+Delete stage directions. Fix character names.
 </div>
 
 <button onclick="sendToPractice()">Send to Practice</button>
@@ -92,3 +96,4 @@ function sendToPractice() {
 
 </body>
 </html>
+
