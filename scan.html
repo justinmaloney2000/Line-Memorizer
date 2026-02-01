@@ -1,10 +1,14 @@
+
 <!DOCTYPE html>
 <html>
 <head>
   <title>Scan Script</title>
 
-  <!-- OCR Library -->
+  <!-- OCR -->
   <script defer src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+
+  <!-- PDF Reader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <style>
     body {
@@ -15,17 +19,12 @@
       max-width: 900px;
       margin: auto;
     }
-
-    h1 {
-      text-align: center;
-    }
-
+    h1 { text-align: center; }
     input, button {
       margin-top: 12px;
       padding: 10px;
       font-size: 16px;
     }
-
     textarea {
       width: 100%;
       height: 340px;
@@ -37,40 +36,21 @@
       border-radius: 8px;
       resize: vertical;
     }
-
     .instructions {
       background: #181818;
       border-left: 4px solid #4da6ff;
       padding: 15px;
       margin-top: 20px;
       font-size: 14px;
-      line-height: 1.5;
     }
-
-    .instructions ul {
-      margin: 8px 0 0 20px;
-    }
-
-    .instructions li {
-      margin-bottom: 6px;
-    }
-
-    .note {
-      color: #aaa;
-      font-size: 13px;
-      margin-top: 10px;
-    }
-
+    .instructions ul { margin-left: 20px; }
     a {
       color: #4da6ff;
       text-decoration: none;
       display: inline-block;
       margin-bottom: 20px;
     }
-
-    canvas {
-      display: none;
-    }
+    canvas { display: none; }
   </style>
 </head>
 
@@ -78,31 +58,24 @@
 
 <a href="index.html">⬅ Back</a>
 
-<h1>📸 Scan Script</h1>
+<h1>📄 Scan Script (PDF or Photo)</h1>
 
-<input type="file" id="imageInput" accept="image/*">
+<input type="file" id="fileInput" accept="image/*,.pdf">
 <br>
-<button onclick="scanText()">Scan Image</button>
+<button onclick="processFile()">Process File</button>
 
 <textarea id="output" spellcheck="true">
-Scanned text will appear here.
-You can edit this text before practicing.
+Extracted text will appear here.
+You can edit it before practicing.
 </textarea>
 
 <div class="instructions">
-  <strong>📷 HOW TO TAKE THE PHOTO (IMPORTANT)</strong>
+  <strong>BEST RESULTS</strong>
   <ul>
-    <li>Hold your phone <strong>parallel</strong> to the page (no angle).</li>
-    <li>Press the script <strong>flat</strong> — book pages should not curve.</li>
-    <li>Use <strong>bright, indirect light</strong> (avoid glare and shadows).</li>
-    <li>Crop the photo to <strong>only the text</strong> (no page numbers or margins).</li>
-    <li>Printed text works best. Handwriting will not scan well.</li>
+    <li><strong>PDFs:</strong> If you can highlight text in the PDF, this will be nearly perfect.</li>
+    <li><strong>Photos:</strong> Hold camera parallel, page flat, bright light, crop to text.</li>
+    <li>Delete stage directions and format as <code>CHARACTER: dialogue</code>.</li>
   </ul>
-</div>
-
-<div class="note">
-  Tip: Clean the text so lines look like <code>CHARACTER: dialogue</code>.  
-  Delete stage directions for best practice results.
 </div>
 
 <button onclick="sendToPractice()">Send to Practice</button>
@@ -110,6 +83,42 @@ You can edit this text before practicing.
 <canvas id="canvas"></canvas>
 
 <script>
+async function processFile() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return alert("Choose a file first.");
+
+  if (file.type === "application/pdf") {
+    extractFromPDF(file);
+  } else {
+    scanImage(file);
+  }
+}
+
+/* ---------- PDF HANDLING ---------- */
+async function extractFromPDF(file) {
+  output.value = "Reading PDF text…";
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = "";
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const strings = content.items.map(item => item.str);
+    fullText += strings.join(" ") + "\n\n";
+  }
+
+  if (fullText.trim().length > 50) {
+    output.value = fullText;
+  } else {
+    output.value = "PDF appears scanned. Switching to OCR…";
+    scanImage(file);
+  }
+}
+
+/* ---------- IMAGE OCR ---------- */
 async function preprocessImage(file) {
   return new Promise(resolve => {
     const img = new Image();
@@ -129,11 +138,9 @@ async function preprocessImage(file) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const d = imageData.data;
 
-      // Grayscale + contrast boost (better for book text)
       for (let i = 0; i < d.length; i += 4) {
         let gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
         gray = gray * 1.25;
-        gray = Math.max(0, Math.min(255, gray));
         d[i] = d[i + 1] = d[i + 2] = gray;
       }
 
@@ -143,13 +150,7 @@ async function preprocessImage(file) {
   });
 }
 
-async function scanText() {
-  const file = document.getElementById("imageInput").files[0];
-  if (!file) {
-    alert("Choose an image first.");
-    return;
-  }
-
+async function scanImage(file) {
   output.value = "Preprocessing image…";
   const canvas = await preprocessImage(file);
 
@@ -167,12 +168,10 @@ async function scanText() {
   output.value = result.data.text;
 }
 
+/* ---------- SEND TO PRACTICE ---------- */
 function sendToPractice() {
   const text = output.value.trim();
-  if (!text) {
-    alert("Nothing to send.");
-    return;
-  }
+  if (!text) return alert("Nothing to send.");
 
   localStorage.setItem("scannedScript", text);
   window.location.href = "practice.html";
@@ -181,4 +180,3 @@ function sendToPractice() {
 
 </body>
 </html>
-
