@@ -3,6 +3,7 @@
 <head>
   <title>Scan Script</title>
 
+  <!-- OCR Library -->
   <script defer src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
 
   <style>
@@ -11,36 +12,64 @@
       color: white;
       font-family: Arial, sans-serif;
       padding: 30px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h1 {
       text-align: center;
     }
+
     input, button {
-      margin-top: 15px;
+      margin-top: 12px;
       padding: 10px;
       font-size: 16px;
     }
+
     textarea {
       width: 100%;
-      height: 320px;
-      margin-top: 20px;
+      height: 340px;
+      margin-top: 15px;
       background: #1c1c1c;
       color: white;
       font-size: 14px;
-      padding: 10px;
+      padding: 12px;
       border-radius: 8px;
+      resize: vertical;
     }
-    canvas {
-      display: none;
+
+    .instructions {
+      background: #181818;
+      border-left: 4px solid #4da6ff;
+      padding: 15px;
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.5;
     }
-    a {
-      color: #4da6ff;
-      text-decoration: none;
-      display: block;
-      margin-bottom: 20px;
+
+    .instructions ul {
+      margin: 8px 0 0 20px;
     }
+
+    .instructions li {
+      margin-bottom: 6px;
+    }
+
     .note {
       color: #aaa;
       font-size: 13px;
       margin-top: 10px;
+    }
+
+    a {
+      color: #4da6ff;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    canvas {
+      display: none;
     }
   </style>
 </head>
@@ -49,7 +78,7 @@
 
 <a href="index.html">⬅ Back</a>
 
-<h1>📸 Scan Script (Improved)</h1>
+<h1>📸 Scan Script</h1>
 
 <input type="file" id="imageInput" accept="image/*">
 <br>
@@ -57,11 +86,23 @@
 
 <textarea id="output" spellcheck="true">
 Scanned text will appear here.
-You can edit it if needed.
+You can edit this text before practicing.
 </textarea>
 
+<div class="instructions">
+  <strong>📷 HOW TO TAKE THE PHOTO (IMPORTANT)</strong>
+  <ul>
+    <li>Hold your phone <strong>parallel</strong> to the page (no angle).</li>
+    <li>Press the script <strong>flat</strong> — book pages should not curve.</li>
+    <li>Use <strong>bright, indirect light</strong> (avoid glare and shadows).</li>
+    <li>Crop the photo to <strong>only the text</strong> (no page numbers or margins).</li>
+    <li>Printed text works best. Handwriting will not scan well.</li>
+  </ul>
+</div>
+
 <div class="note">
-Best results: printed text, bright light, flat page.
+  Tip: Clean the text so lines look like <code>CHARACTER: dialogue</code>.  
+  Delete stage directions for best practice results.
 </div>
 
 <button onclick="sendToPractice()">Send to Practice</button>
@@ -83,17 +124,17 @@ async function preprocessImage(file) {
 
       canvas.width = img.width;
       canvas.height = img.height;
-
       ctx.drawImage(img, 0, 0);
 
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
+      const d = imageData.data;
 
-      // Convert to high-contrast black & white
-      for (let i = 0; i < data.length; i += 4) {
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        const value = avg > 150 ? 255 : 0;
-        data[i] = data[i + 1] = data[i + 2] = value;
+      // Grayscale + contrast boost (better for book text)
+      for (let i = 0; i < d.length; i += 4) {
+        let gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        gray = gray * 1.25;
+        gray = Math.max(0, Math.min(255, gray));
+        d[i] = d[i + 1] = d[i + 2] = gray;
       }
 
       ctx.putImageData(imageData, 0, 0);
@@ -109,26 +150,25 @@ async function scanText() {
     return;
   }
 
-  document.getElementById("output").value = "Preprocessing image…";
-
+  output.value = "Preprocessing image…";
   const canvas = await preprocessImage(file);
 
-  document.getElementById("output").value = "Scanning…";
+  output.value = "Scanning… this may take 10–15 seconds.";
 
   const result = await Tesseract.recognize(
     canvas,
     "eng",
     {
-      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:'!?-() ",
-      preserve_interword_spaces: 1
+      preserve_interword_spaces: 1,
+      tessedit_pageseg_mode: 6
     }
   );
 
-  document.getElementById("output").value = result.data.text;
+  output.value = result.data.text;
 }
 
 function sendToPractice() {
-  const text = document.getElementById("output").value.trim();
+  const text = output.value.trim();
   if (!text) {
     alert("Nothing to send.");
     return;
