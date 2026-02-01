@@ -2,28 +2,19 @@
 <html>
 <head>
   <title>Scan Script</title>
-
   <script defer src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
 
   <style>
     body {
       background: #0f0f0f;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       padding: 30px;
       text-align: center;
     }
-    input {
-      margin-top: 20px;
-      font-size: 16px;
-      color: white;
-      background: #333;
-      padding: 10px;
-      border-radius: 6px;
-    }
-    button {
+    input, button {
       margin-top: 15px;
-      padding: 10px 16px;
+      padding: 10px;
       font-size: 16px;
     }
     pre {
@@ -47,7 +38,7 @@
 
 <a href="index.html">⬅ Back</a>
 
-<h1>📸 Scan Your Script</h1>
+<h1>📸 Scan Script</h1>
 
 <input type="file" id="imageInput" accept="image/*">
 <br>
@@ -60,10 +51,7 @@
 <script>
 async function scanText() {
   const image = document.getElementById("imageInput").files[0];
-  if (!image) {
-    alert("Choose an image first.");
-    return;
-  }
+  if (!image) return alert("Choose an image first.");
 
   document.getElementById("output").textContent = "Scanning…";
 
@@ -73,7 +61,6 @@ async function scanText() {
 
 function sendToPractice() {
   const text = document.getElementById("output").textContent;
-
   if (!text || text.includes("Nothing scanned")) {
     alert("Scan something first.");
     return;
