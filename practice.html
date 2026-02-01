@@ -7,7 +7,7 @@
     body {
       background: #0f0f0f;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       padding: 30px;
       text-align: center;
     }
@@ -15,7 +15,7 @@
       background: #1c1c1c;
       padding: 20px;
       border-radius: 10px;
-      max-width: 600px;
+      max-width: 650px;
       margin: auto;
     }
     .cue {
@@ -23,15 +23,14 @@
       font-style: italic;
       margin-bottom: 10px;
     }
-    textarea {
+    textarea, input {
       width: 100%;
-      height: 70px;
       font-size: 16px;
       margin-top: 10px;
+      padding: 8px;
     }
     button {
       margin-top: 10px;
-      margin-right: 5px;
       padding: 8px 14px;
     }
     .hint {
@@ -39,12 +38,8 @@
       display: none;
       margin-top: 10px;
     }
-    .correct {
-      color: #4caf50;
-    }
-    .wrong {
-      color: #ff6b6b;
-    }
+    .correct { color: #4caf50; }
+    .wrong { color: #ff6b6b; }
     a {
       color: #4da6ff;
       text-decoration: none;
@@ -61,9 +56,13 @@
 <h1>🎭 Start Practicing</h1>
 
 <div class="box">
+
+  <input id="characterName" placeholder="Enter your character name (e.g. ALEX)">
+  <button onclick="startPractice()">Start</button>
+
   <div class="cue"></div>
 
-  <textarea id="userInput" placeholder="Type your line from memory..."></textarea>
+  <textarea id="userInput" placeholder="Type your line..."></textarea>
 
   <br>
   <button onclick="checkLine()">Check</button>
@@ -74,26 +73,48 @@
 </div>
 
 <script>
-const scannedText = localStorage.getItem("scannedScript");
-const lines = scannedText
-  ? scannedText.split("\n").filter(l => l.trim() !== "")
-  : [];
+const scannedText = localStorage.getItem("scannedScript") || "";
+const allLines = scannedText.split("\n").map(l => l.trim()).filter(Boolean);
 
-let index = 1;
+let practicePairs = [];
+let current = 0;
 
-function normalize(text) {
-  return text.toLowerCase().replace(/[^\w\s]/g, "").trim();
+function normalize(t) {
+  return t.toLowerCase().replace(/[^\w\s]/g, "").trim();
+}
+
+function startPractice() {
+  const character = document.getElementById("characterName").value.trim().toUpperCase();
+  if (!character) return alert("Enter a character name.");
+
+  practicePairs = [];
+
+  for (let i = 1; i < allLines.length; i++) {
+    if (allLines[i].toUpperCase().startsWith(character + ":")) {
+      practicePairs.push({
+        cue: allLines[i - 1],
+        line: allLines[i].split(":").slice(1).join(":").trim()
+      });
+    }
+  }
+
+  if (practicePairs.length === 0) {
+    alert("No lines found for that character.");
+    return;
+  }
+
+  current = 0;
+  loadLine();
 }
 
 function loadLine() {
-  if (lines.length < 2 || index >= lines.length) {
-    document.querySelector(".cue").textContent =
-      "No more lines to practice.";
+  if (current >= practicePairs.length) {
+    document.querySelector(".cue").textContent = "🎉 All lines completed!";
     return;
   }
 
   document.querySelector(".cue").textContent =
-    "Cue line: “" + lines[index - 1] + "”";
+    "Cue line: “" + practicePairs[current].cue + "”";
 
   document.getElementById("userInput").value = "";
   document.getElementById("feedback").textContent = "";
@@ -101,13 +122,13 @@ function loadLine() {
 
 function checkLine() {
   const input = document.getElementById("userInput").value;
-  const correctLine = lines[index];
+  const correct = practicePairs[current].line;
 
-  if (normalize(input) === normalize(correctLine)) {
+  if (normalize(input) === normalize(correct)) {
     document.getElementById("feedback").innerHTML =
       "<div class='correct'>✔ Correct</div>";
-    index += 2;
-    setTimeout(loadLine, 1000);
+    current++;
+    setTimeout(loadLine, 900);
   } else {
     document.getElementById("feedback").innerHTML =
       "<div class='wrong'>Try again</div>";
@@ -115,19 +136,15 @@ function checkLine() {
 }
 
 function showHint() {
-  const correctLine = lines[index];
-  const hint = correctLine.split(" ").slice(0, 3).join(" ") + "...";
+  const words = practicePairs[current].line.split(" ");
+  const hint = words.slice(0, 3).join(" ") + "...";
 
-  const hintDiv = document.getElementById("hint");
-  hintDiv.textContent = hint;
-  hintDiv.style.display = "block";
+  const h = document.getElementById("hint");
+  h.textContent = hint;
+  h.style.display = "block";
 
-  setTimeout(() => {
-    hintDiv.style.display = "none";
-  }, 3000);
+  setTimeout(() => h.style.display = "none", 3000);
 }
-
-loadLine();
 </script>
 
 </body>
