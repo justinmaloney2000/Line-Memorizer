@@ -3,7 +3,6 @@
 <head>
   <title>Scan Script</title>
 
-  <!-- Load OCR safely -->
   <script defer src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
 
   <style>
@@ -49,7 +48,6 @@
 <a href="index.html">⬅ Back</a>
 
 <h1>📸 Scan Your Script</h1>
-<p>Upload a photo or screenshot of a printed script page.</p>
 
 <input type="file" id="imageInput" accept="image/*">
 <br>
@@ -57,25 +55,32 @@
 
 <pre id="output">Nothing scanned yet.</pre>
 
+<button onclick="sendToPractice()">Send to Practice</button>
+
 <script>
 async function scanText() {
-  try {
-    const image = document.getElementById("imageInput").files[0];
-    if (!image) {
-      alert("Please choose an image first.");
-      return;
-    }
-
-    document.getElementById("output").textContent = "Scanning… please wait.";
-
-    const result = await Tesseract.recognize(image, "eng");
-
-    document.getElementById("output").textContent = result.data.text;
-
-  } catch (err) {
-    document.getElementById("output").textContent =
-      "⚠️ Scanner error:\n\n" + err;
+  const image = document.getElementById("imageInput").files[0];
+  if (!image) {
+    alert("Choose an image first.");
+    return;
   }
+
+  document.getElementById("output").textContent = "Scanning…";
+
+  const result = await Tesseract.recognize(image, "eng");
+  document.getElementById("output").textContent = result.data.text;
+}
+
+function sendToPractice() {
+  const text = document.getElementById("output").textContent;
+
+  if (!text || text.includes("Nothing scanned")) {
+    alert("Scan something first.");
+    return;
+  }
+
+  localStorage.setItem("scannedScript", text);
+  window.location.href = "practice.html";
 }
 </script>
 
