@@ -7,7 +7,7 @@
     body {
       background: #0f0f0f;
       color: white;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       padding: 30px;
       text-align: center;
     }
@@ -15,23 +15,26 @@
       background: #1c1c1c;
       padding: 20px;
       border-radius: 10px;
-      max-width: 650px;
+      max-width: 700px;
       margin: auto;
     }
-    .cue {
-      color: #aaa;
-      font-style: italic;
-      margin-bottom: 10px;
-    }
-    textarea, input {
+    input, textarea {
       width: 100%;
       font-size: 16px;
-      margin-top: 10px;
       padding: 8px;
+      margin-top: 10px;
+    }
+    textarea {
+      height: 70px;
     }
     button {
       margin-top: 10px;
       padding: 8px 14px;
+    }
+    .cue {
+      color: #aaa;
+      font-style: italic;
+      margin-top: 15px;
     }
     .hint {
       color: #4da6ff;
@@ -57,48 +60,51 @@
 
 <div class="box">
 
-  <input id="characterName" placeholder="Enter your character name (e.g. ALEX)">
+  <input id="characterName" placeholder="Enter your character name (EXACT, e.g. ALEX)">
   <button onclick="startPractice()">Start</button>
 
   <div class="cue"></div>
 
-  <textarea id="userInput" placeholder="Type your line..."></textarea>
+  <textarea id="userInput" placeholder="Type your line from memory..."></textarea>
 
-  <br>
   <button onclick="checkLine()">Check</button>
   <button onclick="showHint()">Hint</button>
 
   <div id="hint" class="hint"></div>
   <div id="feedback"></div>
+
 </div>
 
 <script>
-const scannedText = localStorage.getItem("scannedScript") || "";
-const allLines = scannedText.split("\n").map(l => l.trim()).filter(Boolean);
+const rawText = localStorage.getItem("scannedScript") || "";
+const lines = rawText.split("\n").map(l => l.trim()).filter(Boolean);
 
-let practicePairs = [];
+let pairs = [];
 let current = 0;
 
-function normalize(t) {
-  return t.toLowerCase().replace(/[^\w\s]/g, "").trim();
+function normalize(text) {
+  return text.toLowerCase().replace(/[^\w\s]/g, "").trim();
 }
 
 function startPractice() {
   const character = document.getElementById("characterName").value.trim().toUpperCase();
-  if (!character) return alert("Enter a character name.");
+  if (!character) {
+    alert("Enter a character name.");
+    return;
+  }
 
-  practicePairs = [];
+  pairs = [];
 
-  for (let i = 1; i < allLines.length; i++) {
-    if (allLines[i].toUpperCase().startsWith(character + ":")) {
-      practicePairs.push({
-        cue: allLines[i - 1],
-        line: allLines[i].split(":").slice(1).join(":").trim()
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].toUpperCase().startsWith(character + ":")) {
+      pairs.push({
+        cue: lines[i - 1],
+        line: lines[i].split(":").slice(1).join(":").trim()
       });
     }
   }
 
-  if (practicePairs.length === 0) {
+  if (pairs.length === 0) {
     alert("No lines found for that character.");
     return;
   }
@@ -108,13 +114,13 @@ function startPractice() {
 }
 
 function loadLine() {
-  if (current >= practicePairs.length) {
+  if (current >= pairs.length) {
     document.querySelector(".cue").textContent = "🎉 All lines completed!";
     return;
   }
 
   document.querySelector(".cue").textContent =
-    "Cue line: “" + practicePairs[current].cue + "”";
+    "Cue line: “" + pairs[current].cue + "”";
 
   document.getElementById("userInput").value = "";
   document.getElementById("feedback").textContent = "";
@@ -122,7 +128,7 @@ function loadLine() {
 
 function checkLine() {
   const input = document.getElementById("userInput").value;
-  const correct = practicePairs[current].line;
+  const correct = pairs[current].line;
 
   if (normalize(input) === normalize(correct)) {
     document.getElementById("feedback").innerHTML =
@@ -136,7 +142,7 @@ function checkLine() {
 }
 
 function showHint() {
-  const words = practicePairs[current].line.split(" ");
+  const words = pairs[current].line.split(" ");
   const hint = words.slice(0, 3).join(" ") + "...";
 
   const h = document.getElementById("hint");
