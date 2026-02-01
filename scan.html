@@ -27,7 +27,9 @@
       font-size: 14px;
       padding: 10px;
       border-radius: 8px;
-      resize: vertical;
+    }
+    canvas {
+      display: none;
     }
     a {
       color: #4da6ff;
@@ -47,38 +49,81 @@
 
 <a href="index.html">⬅ Back</a>
 
-<h1>📸 Scan Script</h1>
+<h1>📸 Scan Script (Improved)</h1>
 
 <input type="file" id="imageInput" accept="image/*">
 <br>
 <button onclick="scanText()">Scan Image</button>
 
 <textarea id="output" spellcheck="true">
-You can edit this text.
-Fix OCR mistakes.
-Format lines like:
-
-CHARACTER: line
+Scanned text will appear here.
+You can edit it if needed.
 </textarea>
 
 <div class="note">
-Clean the text before practicing.  
-Delete stage directions. Fix character names.
+Best results: printed text, bright light, flat page.
 </div>
 
 <button onclick="sendToPractice()">Send to Practice</button>
 
+<canvas id="canvas"></canvas>
+
 <script>
+async function preprocessImage(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = () => img.src = reader.result;
+    reader.readAsDataURL(file);
+
+    img.onload = () => {
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      // Convert to high-contrast black & white
+      for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        const value = avg > 150 ? 255 : 0;
+        data[i] = data[i + 1] = data[i + 2] = value;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      resolve(canvas);
+    };
+  });
+}
+
 async function scanText() {
-  const image = document.getElementById("imageInput").files[0];
-  if (!image) {
+  const file = document.getElementById("imageInput").files[0];
+  if (!file) {
     alert("Choose an image first.");
     return;
   }
 
-  document.getElementById("output").value = "Scanning… please wait.";
+  document.getElementById("output").value = "Preprocessing image…";
 
-  const result = await Tesseract.recognize(image, "eng");
+  const canvas = await preprocessImage(file);
+
+  document.getElementById("output").value = "Scanning…";
+
+  const result = await Tesseract.recognize(
+    canvas,
+    "eng",
+    {
+      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:'!?-() ",
+      preserve_interword_spaces: 1
+    }
+  );
+
   document.getElementById("output").value = result.data.text;
 }
 
