@@ -2,13 +2,14 @@
 <html>
 <head>
   <title>Scan Script</title>
+
   <script defer src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
 
   <style>
     body {
       background: #0f0f0f;
       color: white;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       padding: 30px;
       text-align: center;
     }
@@ -17,12 +18,14 @@
       padding: 10px;
       font-size: 16px;
     }
-    pre {
-      background: #1c1c1c;
-      padding: 15px;
+    textarea {
+      width: 100%;
+      height: 320px;
       margin-top: 20px;
-      text-align: left;
-      white-space: pre-wrap;
+      background: #1c1c1c;
+      color: white;
+      font-size: 14px;
+      padding: 10px;
       border-radius: 8px;
     }
     a {
@@ -30,6 +33,11 @@
       text-decoration: none;
       display: block;
       margin-bottom: 20px;
+    }
+    .note {
+      color: #aaa;
+      font-size: 13px;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -44,25 +52,36 @@
 <br>
 <button onclick="scanText()">Scan Image</button>
 
-<pre id="output">Nothing scanned yet.</pre>
+<textarea id="output">
+Nothing scanned yet.
+</textarea>
+
+<div class="note">
+Format your script like:<br>
+<code>CHARACTER: line</code><br>
+Delete stage directions for best results.
+</div>
 
 <button onclick="sendToPractice()">Send to Practice</button>
 
 <script>
 async function scanText() {
   const image = document.getElementById("imageInput").files[0];
-  if (!image) return alert("Choose an image first.");
+  if (!image) {
+    alert("Choose an image first.");
+    return;
+  }
 
-  document.getElementById("output").textContent = "Scanning…";
+  document.getElementById("output").value = "Scanning… please wait.";
 
   const result = await Tesseract.recognize(image, "eng");
-  document.getElementById("output").textContent = result.data.text;
+  document.getElementById("output").value = result.data.text;
 }
 
 function sendToPractice() {
-  const text = document.getElementById("output").textContent;
-  if (!text || text.includes("Nothing scanned")) {
-    alert("Scan something first.");
+  const text = document.getElementById("output").value.trim();
+  if (!text) {
+    alert("Nothing to send.");
     return;
   }
 
