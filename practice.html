@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Line Practice</title>
+  <title>Practice Lines</title>
+
   <style>
     body {
       background: #0f0f0f;
       color: white;
       font-family: Arial, sans-serif;
       padding: 30px;
+      text-align: center;
     }
     .box {
       background: #1c1c1c;
@@ -31,7 +33,6 @@
       margin-top: 10px;
       margin-right: 5px;
       padding: 8px 14px;
-      font-size: 14px;
     }
     .hint {
       color: #4da6ff;
@@ -40,28 +41,27 @@
     }
     .correct {
       color: #4caf50;
-      margin-top: 10px;
     }
     .wrong {
       color: #ff6b6b;
-      margin-top: 10px;
     }
     a {
       color: #4da6ff;
       text-decoration: none;
-      display: inline-block;
+      display: block;
       margin-bottom: 20px;
     }
   </style>
 </head>
+
 <body>
 
 <a href="index.html">⬅ Back</a>
 
+<h1>🎭 Start Practicing</h1>
+
 <div class="box">
-  <div class="cue">
-    Cue line: “You never listen to me.”
-  </div>
+  <div class="cue"></div>
 
   <textarea id="userInput" placeholder="Type your line from memory..."></textarea>
 
@@ -74,33 +74,60 @@
 </div>
 
 <script>
-  const correctLine = "I do listen. I just don’t agree.";
-  const hintText = "I do listen...";
+const scannedText = localStorage.getItem("scannedScript");
+const lines = scannedText
+  ? scannedText.split("\n").filter(l => l.trim() !== "")
+  : [];
 
-  function normalize(text) {
-    return text.toLowerCase().replace(/[^\w\s]/g, "").trim();
+let index = 1;
+
+function normalize(text) {
+  return text.toLowerCase().replace(/[^\w\s]/g, "").trim();
+}
+
+function loadLine() {
+  if (lines.length < 2 || index >= lines.length) {
+    document.querySelector(".cue").textContent =
+      "No more lines to practice.";
+    return;
   }
 
-  function checkLine() {
-    const input = document.getElementById("userInput").value;
-    const feedback = document.getElementById("feedback");
+  document.querySelector(".cue").textContent =
+    "Cue line: “" + lines[index - 1] + "”";
 
-    if (normalize(input) === normalize(correctLine)) {
-      feedback.innerHTML = "<div class='correct'>✔ Correct!</div>";
-    } else {
-      feedback.innerHTML = "<div class='wrong'>Try again.</div>";
-    }
+  document.getElementById("userInput").value = "";
+  document.getElementById("feedback").textContent = "";
+}
+
+function checkLine() {
+  const input = document.getElementById("userInput").value;
+  const correctLine = lines[index];
+
+  if (normalize(input) === normalize(correctLine)) {
+    document.getElementById("feedback").innerHTML =
+      "<div class='correct'>✔ Correct</div>";
+    index += 2;
+    setTimeout(loadLine, 1000);
+  } else {
+    document.getElementById("feedback").innerHTML =
+      "<div class='wrong'>Try again</div>";
   }
+}
 
-  function showHint() {
-    const hint = document.getElementById("hint");
-    hint.textContent = hintText;
-    hint.style.display = "block";
+function showHint() {
+  const correctLine = lines[index];
+  const hint = correctLine.split(" ").slice(0, 3).join(" ") + "...";
 
-    setTimeout(() => {
-      hint.style.display = "none";
-    }, 3000);
-  }
+  const hintDiv = document.getElementById("hint");
+  hintDiv.textContent = hint;
+  hintDiv.style.display = "block";
+
+  setTimeout(() => {
+    hintDiv.style.display = "none";
+  }, 3000);
+}
+
+loadLine();
 </script>
 
 </body>
